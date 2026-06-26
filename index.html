@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="css/leaflet.css">
+
+<style>
+html, body, #map {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* ================= VERTICAL TRANSPARENCY CONTROL ================= */
+.opacity-control {
+    background: white;
+    padding: 12px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    font-family: Arial;
+    font-size: 13px;
+    width: 40px;
+    text-align: center;
+}
+
+/* rotate slider vertical */
+.opacity-control input[type="range"] {
+    writing-mode: bt-lr; /* Firefox */
+    -webkit-appearance: slider-vertical; /* Chrome */
+    width: 8px;
+    height: 120px;
+    margin: 10px auto;
+}
+
+/* label spacing */
+.opacity-control b {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+/* ================= NORTH ARROW (FIXED SVG) ================= */
+.north-arrow {
+    background: white;
+    padding: 6px;
+    border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+    text-align: center;
+}
+
+.north-arrow svg {
+    width: 30px;
+    height: 30px;
+}
+</style>
+</head>
+
+<body>
+<div id="map"></div>
+
+<script src="js/leaflet.js"></script>
+
+<script>
+
+// ================= MAP INIT =================
+var map = L.map('map', {
+    zoomControl: true,
+    maxZoom: 28,
+    minZoom: 1
+});
+
+// ================= BASEMAPS =================
+var osm = L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+);
+
+var googleSat = L.tileLayer(
+    'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
+).addTo(map);
+
+var googleStreets = L.tileLayer(
+    'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'
+);
+
+// ================= AOI =================
+var bounds = [
+    [33.6928845443, 72.7446091583],
+    [33.7317176783, 72.8213791463]
+];
+
+var overlay = L.imageOverlay(
+    'data/FaisalHillMap_1.png',
+    bounds,
+    { opacity: 1 }
+).addTo(map);
+
+map.fitBounds(bounds);
+
+// ================= SCALE =================
+L.control.scale({
+    metric: true,
+    imperial: true
+}).addTo(map);
+
+// ================= BASEMAP SWITCH =================
+L.control.layers({
+    "Google Satellite": googleSat,
+    "Google Streets": googleStreets,
+    "OSM": osm
+}, {
+    "AOI Overlay": overlay
+}, { collapsed: false }).addTo(map);
+
+// ================= VERTICAL TRANSPARENCY =================
+var opacityControl = L.control({ position: 'topright' });
+
+opacityControl.onAdd = function () {
+    var div = L.DomUtil.create('div', 'opacity-control');
+
+    div.innerHTML = `
+        <b>Opacity</b>
+        <input id="slider" type="range" min="0" max="1" step="0.01" value="1">
+    `;
+
+    return div;
+};
+
+opacityControl.addTo(map);
+
+setTimeout(function () {
+    var slider = document.getElementById('slider');
+
+    L.DomEvent.disableClickPropagation(slider);
+
+    slider.addEventListener('input', function (e) {
+        overlay.setOpacity(parseFloat(e.target.value));
+    });
+}, 300);
+
+// ================= NORTH ARROW (FIXED - NO EXTERNAL IMAGE) =================
+var North = L.control({ position: 'topright' });
+
+North.onAdd = function () {
+    var div = L.DomUtil.create('div', 'north-arrow');
+
+    div.innerHTML = `
+        <svg viewBox="0 0 100 100">
+            <polygon points="50,5 60,40 50,35 40,40" fill="black"/>
+            <text x="50" y="95" text-anchor="middle" font-size="30" font-family="Arial">N</text>
+        </svg>
+    `;
+
+    return div;
+};
+
+North.addTo(map);
+
+</script>
+
+</body>
+</html>
